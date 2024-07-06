@@ -1,51 +1,80 @@
 package parser
 
-import "github.com/medkhabt/todoprs/token"
+import (
+	"fmt"
+
+	"github.com/medkhabt/todoprs/token"
+)
 
 type Parser struct {
 }
 
 type Node interface {
-	productions() [][]Node
+	productions() ([][]Node, error)
 	isTerminal() bool
-	getToken() *token.Token
+	getToken() (*token.Token, error)
 }
 
 type TerminalNode struct {
 	token *token.Token
 }
 
+type NonTerminalNode struct {
+	prods [][]Node
+}
+
 func New() *Parser {
 	return &Parser{}
 }
-func (tn *TerminalNode) productions() [][]Node {
-	return nil
+func (tn *TerminalNode) productions() ([][]Node, error) {
+	return nil, fmt.Errorf("TerminalNode has no productions.")
 }
-func (tn *TerminalNode) getToken() *token.Token {
-	return tn.token
+func (tn *TerminalNode) getToken() (*token.Token, error) {
+	return tn.token, nil
 }
 func (tn *TerminalNode) isTerminal() bool {
 	return true
 }
 
-func (p *Parser) first(n Node) []*token.Token {
+func (ntn *NonTerminalNode) productions() ([][]Node, error) {
+	return ntn.prods, nil
+}
+func (ntn *NonTerminalNode) getToken() (*token.Token, error) {
+	return nil, fmt.Errorf("getToken() not available for a NonTerminalNode.")
+}
+func (ntn *NonTerminalNode) isTerminal() bool {
+	return false
+}
+func (ntn *NonTerminalNode) addProduction(production []Node) *NonTerminalNode {
+	ntn.prods = append(ntn.prods, production)
+	return ntn
+}
+
+func (p *Parser) first(n Node) ([]*token.Token, error) {
 	if n.isTerminal() {
-		return []*token.Token{n.getToken()}
+		tk, err := n.getToken()
+		if err != nil {
+			return nil, err
+		}
+		return []*token.Token{tk}, nil
 	} else {
 		toks := []*token.Token{}
-		for _, production := range n.productions() {
+		productions, err := n.productions()
+		if err != nil {
+			return nil, err
+		}
+		for _, production := range productions {
 			i := 0
 			c := true
 			for c && i < len(production) {
 				c = false
-				fy := p.first(production[i])
+				fy, err := p.first(production[i])
+				if err != nil {
+					return nil, err
+				}
 				if token.ExistEpsTk(fy) {
 					c = true
 					i += 1
-				}
-				if len(production) == 1 && len(fy) == 1 && fy[0].Type == token.EPSILON {
-					// A -> \epsilon, add the epsilon as a first
-					toks = append(toks, fy[0])
 				}
 				for _, tok := range fy {
 					if tok.Type != token.EPSILON {
@@ -53,9 +82,13 @@ func (p *Parser) first(n Node) []*token.Token {
 						toks = append(toks, tok)
 					}
 				}
+				// Means that the last node of the production can also be reduced to epsilon so epsilon is also a first.
+				if i == len(production) {
+					toks = append(toks, &token.Token{token.EPSILON, ""})
+				}
 			}
 		}
-		return toks
+		return toks, nil
 	}
 }
 
