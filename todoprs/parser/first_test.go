@@ -10,7 +10,7 @@ func TestFirstTerminalNode(t *testing.T) {
 	input := &TerminalNode{&token.Token{token.CHAR, "a"}}
 	validation := []*token.Token{&token.Token{token.CHAR, "a"}}
 
-	parser := New()
+	parser := New(input)
 	rslt, err := parser.first(input)
 	if err != nil {
 		t.Fatalf("result returned the following error : %s", err)
@@ -85,8 +85,8 @@ func TestFirstNonTerminalNode(t *testing.T) {
 		[]*token.Token{&token.Token{token.CHAR, "b"}, &token.Token{token.CHAR, "c"}, &token.Token{token.EPSILON, ""}},
 		[]*token.Token{&token.Token{token.CHAR, "b"}, &token.Token{token.CHAR, "c"}, &token.Token{token.CHAR, "d"}},
 	}
-	parser := New()
 	for k := 0; k < len(input); k += 1 {
+		parser := New(input[k])
 		rslt, err := parser.first(input[k])
 		if err != nil {
 			t.Fatalf("result returned the following error : %s", err)
