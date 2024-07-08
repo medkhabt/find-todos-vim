@@ -10,6 +10,11 @@ type NonTerminalNode struct {
 	name  string
 	prods [][]Node
 }
+type nonTerminalNodes []*NonTerminalNode
+
+func (ntn *NonTerminalNode) String() string {
+	return fmt.Sprintf("%v", *ntn)
+}
 
 func (ntn *NonTerminalNode) productions() ([][]Node, error) {
 	return ntn.prods, nil
