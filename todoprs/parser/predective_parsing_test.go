@@ -45,7 +45,9 @@ func TestOnRipGrepGrammar(t *testing.T) {
 	slash := &TerminalNode{&token.Token{token.SLASH, ""}}
 	dot := &TerminalNode{&token.Token{token.DOT, ""}}
 	todo := &TerminalNode{&token.Token{token.TODO, ""}}
+	space := &TerminalNode{&token.Token{token.SPACE, ""}}
 	eps := &TerminalNode{&token.Token{token.EPSILON, ""}}
+	newline := &TerminalNode{&token.Token{token.NEWLINE, ""}}
 
 	C0 := (&NonTerminalNode{"C0", [][]Node{}}).addProduction([]Node{c}).addProduction([]Node{d})
 	// Maaaan this is not pretty.. why dot at the end golang :/
@@ -53,6 +55,7 @@ func TestOnRipGrepGrammar(t *testing.T) {
 		addProduction([]Node{C0}).
 		addProduction([]Node{dot}).
 		addProduction([]Node{colon}).
+		addProduction([]Node{space}).
 		addProduction([]Node{slash})
 	T1 := (&NonTerminalNode{"T1", [][]Node{}})
 	T1.addProduction([]Node{C, T1}).addProduction([]Node{eps})
@@ -63,7 +66,7 @@ func TestOnRipGrepGrammar(t *testing.T) {
 	L := (&NonTerminalNode{"L", [][]Node{}}).addProduction([]Node{colon, d, L1, colon})
 
 	E := (&NonTerminalNode{"E", [][]Node{}}).addProduction([]Node{todo})
-	E.addProduction([]Node{C0, E})
+	E.addProduction([]Node{C, E})
 
 	P1 := (&NonTerminalNode{"P1", [][]Node{}})
 	P0 := (&NonTerminalNode{"P0", [][]Node{}}).addProduction([]Node{C0, P1})
@@ -71,14 +74,16 @@ func TestOnRipGrepGrammar(t *testing.T) {
 		addProduction([]Node{slash, C0, P1}).
 		addProduction([]Node{dot, C0, P1}).
 		addProduction([]Node{eps})
-	S := (&NonTerminalNode{"S", [][]Node{}}).addProduction([]Node{P0, L, slash, slash, E, T})
+	St := (&NonTerminalNode{"St", [][]Node{}}).addProduction([]Node{P0, L, slash, slash, E, T})
+	S1 := (&NonTerminalNode{"S1", [][]Node{}}).addProduction([]Node{newline, St}).addProduction([]Node{eps})
+	S := (&NonTerminalNode{"S", [][]Node{}}).addProduction([]Node{St, S1})
 
 	p := New(S)
 	parsingTable, err := p.makeParsingTable()
 	if err != nil {
 		t.Fatalf("This test is not your problem , you gotta fix your parsing table !: %s", err)
 	}
-	// t/t.t:33://TODOt$
+	// t/t.t:33://TODO  t  t\ntt.t:33://TODO  t  t$
 	input := []*token.Token{
 		&token.Token{token.CHAR, "t"},
 		&token.Token{token.SLASH, ""},
@@ -91,7 +96,34 @@ func TestOnRipGrepGrammar(t *testing.T) {
 		&token.Token{token.COLON, ""},
 		&token.Token{token.SLASH, ""},
 		&token.Token{token.SLASH, ""},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.CHAR, "t"},
 		&token.Token{token.TODO, ""},
+		&token.Token{token.SPACE, ""},
+		&token.Token{token.SPACE, ""},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.SPACE, ""},
+		&token.Token{token.SPACE, ""},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.NEWLINE, ""},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.DOT, ""},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.COLON, ""},
+		&token.Token{token.DIGIT, "3"},
+		&token.Token{token.DIGIT, "3"},
+		&token.Token{token.COLON, ""},
+		&token.Token{token.SLASH, ""},
+		&token.Token{token.SLASH, ""},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.TODO, ""},
+		&token.Token{token.SPACE, ""},
+		&token.Token{token.SPACE, ""},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.SPACE, ""},
+		&token.Token{token.SPACE, ""},
 		&token.Token{token.CHAR, "t"},
 		&token.Token{token.EOF, ""},
 	}

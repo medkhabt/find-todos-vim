@@ -12,7 +12,7 @@ type TokenTest struct {
 }
 
 func TestNextToken(t *testing.T) {
-	input := `t/ed/a.d:2://TODO t`
+	input := "t/ed/a.d:2://TODO t\n\r s \nt"
 	tests := []*TokenTest{
 		&TokenTest{token.CHAR, "t"},
 		&TokenTest{token.SLASH, "\x00"},
@@ -30,11 +30,14 @@ func TestNextToken(t *testing.T) {
 		&TokenTest{token.TODO, "\x00"},
 		&TokenTest{token.SPACE, "\x00"},
 		&TokenTest{token.CHAR, "t"},
+		&TokenTest{token.NEWLINE, "\x00"},
+		&TokenTest{token.CHAR, "s"},
+		&TokenTest{token.NEWLINE, "\x00"},
+		&TokenTest{token.CHAR, "t"},
 	}
 	l := New(input)
 	for i, tt := range tests {
 		tok := l.NextToken()
-		t.Logf("tok is %v.\n", tok)
 		if tok.Type != tt.expectedType {
 			t.Fatalf("test[%d]: token type don't match. expected=%q, got=%q", i, tt.expectedType, tok.Type)
 		}

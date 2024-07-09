@@ -7,6 +7,8 @@ type Lexer struct {
 	position     int
 	readPosition int
 	ch           byte
+	// I don't know if this a good solution but it solves my issue with whitespaces, i can keep the ones after TODO.
+	inTask bool
 }
 
 func New(input string) *Lexer {
@@ -29,7 +31,19 @@ func (l *Lexer) NextToken() token.Token {
 	} else if l.ch == '.' {
 		tok = newToken(token.DOT, 0)
 	} else if l.ch == ' ' {
-		tok = newToken(token.SPACE, 0)
+		if l.inTask {
+			tok = newToken(token.SPACE, 0)
+		} else {
+			l.readChar()
+			tok = l.NextToken()
+		}
+	} else if l.ch == byte(0x0D) || l.ch == byte(0x0A) {
+		tok = newToken(token.NEWLINE, 0)
+		s := l.peek(1)
+		if s == "\n\r" || s == "\r\n" {
+			l.readChar()
+		}
+		l.inTask = false
 	} else if l.ch >= '0' && l.ch <= '9' {
 		tok = newToken(token.DIGIT, l.ch)
 	} else if l.ch == '_' || l.ch == '-' || (l.ch >= 'a' && l.ch <= 'z') || (l.ch >= 'A' && l.ch <= 'Z') {
@@ -38,6 +52,7 @@ func (l *Lexer) NextToken() token.Token {
 			l.readChar()
 			l.readChar()
 			l.readChar()
+			l.inTask = true
 		} else {
 			tok = newToken(token.CHAR, l.ch)
 		}
