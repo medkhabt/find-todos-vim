@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 
+	"github.com/medkhabt/todoprs/lexer"
 	"github.com/medkhabt/todoprs/token"
 )
 
@@ -357,7 +358,7 @@ func (p *Parser) PredictiveParsing(inputBuffer []*token.Token, prsTbl map[Transi
 					}
 				}
 			} else {
-				return fmt.Errorf("Parsing error for non terminal")
+				return fmt.Errorf("Parsing error for transition (non_terminal: %s,  token: %s)", Y.name, a.Type)
 				// parsing error
 			}
 		}
@@ -367,6 +368,87 @@ func (p *Parser) PredictiveParsing(inputBuffer []*token.Token, prsTbl map[Transi
 		return err
 	}
 	return nil
+}
+
+// First version, no streaming
+func (p *Parser) Parse(input string) error {
+	lexer := lexer.New(input)
+	toks := []*token.Token{}
+	tok := lexer.NextToken()
+	toks = append(toks, tok)
+	for tok.Type != token.EOF {
+		tok = lexer.NextToken()
+		toks = append(toks, tok)
+	}
+	parsTbl, err := p.makeParsingTable()
+	if err != nil {
+		return err
+	}
+	//input := "t/t.t:30://TODO test"
+	/*toks = []*token.Token{
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.SLASH, ""},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.DOT, ""},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.COLON, ""},
+		&token.Token{token.DIGIT, "3"},
+		&token.Token{token.DIGIT, "0"},
+		&token.Token{token.COLON, ""},
+		&token.Token{token.SLASH, ""},
+		&token.Token{token.SLASH, ""},
+		&token.Token{token.TODO, ""},
+		&token.Token{token.SPACE, ""},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.CHAR, "e"},
+		&token.Token{token.CHAR, "s"},
+		&token.Token{token.CHAR, "t"},
+		&token.Token{token.EOF, ""},
+	}*/
+	return p.PredictiveParsing(toks, parsTbl)
+}
+
+func RgGrammar() Node {
+
+	c := &TerminalNode{&token.Token{token.CHAR, ""}}
+	d := &TerminalNode{&token.Token{token.DIGIT, ""}}
+	colon := &TerminalNode{&token.Token{token.COLON, ""}}
+	slash := &TerminalNode{&token.Token{token.SLASH, ""}}
+	dot := &TerminalNode{&token.Token{token.DOT, ""}}
+	todo := &TerminalNode{&token.Token{token.TODO, ""}}
+	space := &TerminalNode{&token.Token{token.SPACE, ""}}
+	eps := &TerminalNode{&token.Token{token.EPSILON, ""}}
+	newline := &TerminalNode{&token.Token{token.NEWLINE, ""}}
+
+	C0 := (&NonTerminalNode{"C0", [][]Node{}}).addProduction([]Node{c}).addProduction([]Node{d})
+	// Maaaan this is not pretty.. why dot at the end golang :/
+	C := (&NonTerminalNode{"C", [][]Node{}}).
+		addProduction([]Node{C0}).
+		addProduction([]Node{dot}).
+		addProduction([]Node{colon}).
+		addProduction([]Node{space}).
+		addProduction([]Node{slash})
+	T1 := (&NonTerminalNode{"T1", [][]Node{}})
+	T1.addProduction([]Node{C, T1}).addProduction([]Node{eps})
+	T := (&NonTerminalNode{"T", [][]Node{}}).addProduction([]Node{C, T1})
+
+	L1 := (&NonTerminalNode{"L1", [][]Node{}})
+	L1.addProduction([]Node{d, L1}).addProduction([]Node{eps})
+	L := (&NonTerminalNode{"L", [][]Node{}}).addProduction([]Node{colon, d, L1, colon})
+
+	E := (&NonTerminalNode{"E", [][]Node{}}).addProduction([]Node{todo})
+	E.addProduction([]Node{C, E})
+
+	P1 := (&NonTerminalNode{"P1", [][]Node{}})
+	P0 := (&NonTerminalNode{"P0", [][]Node{}}).addProduction([]Node{slash, C0, P1})
+	P1.addProduction([]Node{C0, P1}).
+		addProduction([]Node{slash, C0, P1}).
+		addProduction([]Node{dot, C0, P1}).
+		addProduction([]Node{eps})
+	St := (&NonTerminalNode{"St", [][]Node{}}).addProduction([]Node{P0, L, slash, slash, E, T})
+	S1 := (&NonTerminalNode{"S1", [][]Node{}}).addProduction([]Node{newline, St}).addProduction([]Node{eps})
+	S := (&NonTerminalNode{"S", [][]Node{}}).addProduction([]Node{St, S1})
+	return S
 }
 
 /* func parse() error {

@@ -127,7 +127,7 @@ func TestOnRipGrepGrammar(t *testing.T) {
 		&token.Token{token.CHAR, "t"},
 		&token.Token{token.EOF, ""},
 	}
-	err = p.PredictiveParsing(input, parsingTable)
+	err = p, PredictiveParsing(input, parsingTable)
 	if err != nil {
 		t.Fatalf("error from predective parsing %s.", err)
 	}
