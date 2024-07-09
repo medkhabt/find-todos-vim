@@ -17,13 +17,14 @@ func New(input string) *Lexer {
 	return l
 }
 
-func newToken(tokenType token.TokenType, ch byte) token.Token {
-	return token.Token{Type: tokenType, Value: string(ch)}
+func newToken(tokenType token.TokenType, ch byte) *token.Token {
+	return &token.Token{Type: tokenType, Value: string(ch)}
 }
 
-func (l *Lexer) NextToken() token.Token {
+func (l *Lexer) NextToken() *token.Token {
 	// TODO for utf-8
-	var tok token.Token
+	ignore := false
+	var tok *token.Token
 	if l.ch == ':' {
 		tok = newToken(token.COLON, 0)
 	} else if l.ch == '/' {
@@ -34,8 +35,11 @@ func (l *Lexer) NextToken() token.Token {
 		if l.inTask {
 			tok = newToken(token.SPACE, 0)
 		} else {
-			l.readChar()
+			for l.ch == ' ' {
+				l.readChar()
+			}
 			tok = l.NextToken()
+			ignore = true
 		}
 	} else if l.ch == byte(0x0D) || l.ch == byte(0x0A) {
 		tok = newToken(token.NEWLINE, 0)
@@ -56,14 +60,25 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.CHAR, l.ch)
 		}
+	} else if l.ch == 0 {
+		tok = newToken(token.EOF, 0)
 	} else {
 		tok = newToken(token.ILLEGAL, 0)
 	}
-	l.readChar()
+	if !ignore {
+		l.readChar()
+	}
 	return tok
 }
+func Min(x int, y int) int {
+	if x < y {
+		return x
+	} else {
+		return y
+	}
+}
 func (l *Lexer) peek(offset int) string {
-	return string(l.input[l.position : l.position+offset+1])
+	return string(l.input[l.position:Min(len(l.input)-1, l.position+offset+1)])
 }
 
 func (l *Lexer) readChar() {

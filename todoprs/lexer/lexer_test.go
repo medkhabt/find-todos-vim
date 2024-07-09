@@ -12,7 +12,7 @@ type TokenTest struct {
 }
 
 func TestNextToken(t *testing.T) {
-	input := "t/ed/a.d:2://TODO t\n\r s \nt"
+	input := "  t/  ed/a.d:2://TODO t\n\r s \nt"
 	tests := []*TokenTest{
 		&TokenTest{token.CHAR, "t"},
 		&TokenTest{token.SLASH, "\x00"},
