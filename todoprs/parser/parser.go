@@ -193,8 +193,8 @@ func (p *Parser) follow(n Node) ([]*token.Token, error) {
 //	terminal a in FIRST(\alph), add A -> \alph to M[A,a]
 //	if eps in FIRST(\alph), then foreach b terminal in FOLLOW(A), add A -> \alpha to M[A, $]
 type Transition struct {
-	nodeName       string
-	transitorValue string
+	nodeName      string
+	transitorType token.TokenType
 }
 
 // LL1, so we have one production per key.
@@ -240,7 +240,7 @@ func (p *Parser) makeParsingTable() (map[Transition][]Node, error) {
 					epsilonExist = true
 				} else {
 					// 1) For each terminal a in FIRST(\alpha), add A -> \alpha to M[A,a]
-					m[Transition{curr.name, f.Value}] = prd
+					m[Transition{curr.name, f.Type}] = prd
 				}
 			}
 			// if \epsilon exists in FIRST(\alpha)
@@ -251,7 +251,7 @@ func (p *Parser) makeParsingTable() (map[Transition][]Node, error) {
 				}
 				for _, fo := range follows {
 					// 2) For each terminal b in FOLLOW(A), add A -> \alpha to M[A,b] (EOF included)
-					m[Transition{curr.name, fo.Value}] = prd
+					m[Transition{curr.name, fo.Type}] = prd
 				}
 			}
 		}
@@ -344,7 +344,7 @@ func (p *Parser) PredictiveParsing(inputBuffer []*token.Token, prsTbl map[Transi
 			if !ok {
 				fmt.Errorf("Couldn't type assert %v to *NonTerminalNode", X)
 			}
-			prod, ok := prsTbl[Transition{Y.name, a.Value}]
+			prod, ok := prsTbl[Transition{Y.name, a.Type}]
 			stack.Pop()
 			if ok {
 				fmt.Printf("%s -> %v \n", Y.name, prod)

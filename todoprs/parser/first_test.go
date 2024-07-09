@@ -20,9 +20,6 @@ func TestFirstTerminalNode(t *testing.T) {
 		if rslt[i].Type != tt.Type {
 			t.Fatalf("token[%d]: token type don't match. expected=%q, got=%q", i, tt.Type, tok.Type)
 		}
-		if rslt[i].Value != tt.Value {
-			t.Fatalf("token[%d]: token value don't match. expected=%q, got=%q", i, tt.Value, tok.Value)
-		}
 	}
 
 }
@@ -30,9 +27,9 @@ func TestFirstTerminalNode(t *testing.T) {
 // TODO order of tokens should when checking the result of first function
 func TestFirstNonTerminalNode(t *testing.T) {
 	tn := &TerminalNode{&token.Token{token.CHAR, "a"}}
-	tnb := &TerminalNode{&token.Token{token.CHAR, "b"}}
-	tnc := &TerminalNode{&token.Token{token.CHAR, "c"}}
-	tnd := &TerminalNode{&token.Token{token.CHAR, "d"}}
+	tnb := &TerminalNode{&token.Token{token.SLASH, ""}}
+	tnc := &TerminalNode{&token.Token{token.COLON, ""}}
+	tnd := &TerminalNode{&token.Token{token.DOT, ""}}
 	eps := &TerminalNode{&token.Token{token.EPSILON, ""}}
 	// A -> a    :::::> First(A) = {a}
 	A0 := (&NonTerminalNode{}).addProduction([]Node{tn})
@@ -79,11 +76,11 @@ func TestFirstNonTerminalNode(t *testing.T) {
 		[]*token.Token{&token.Token{token.CHAR, "a"}},
 		[]*token.Token{&token.Token{token.CHAR, "a"}, &token.Token{token.EPSILON, ""}},
 		[]*token.Token{&token.Token{token.CHAR, "a"}},
-		[]*token.Token{&token.Token{token.CHAR, "b"}},
-		[]*token.Token{&token.Token{token.CHAR, "b"}, &token.Token{token.CHAR, "c"}},
-		[]*token.Token{&token.Token{token.CHAR, "b"}, &token.Token{token.CHAR, "c"}, &token.Token{token.EPSILON, ""}},
-		[]*token.Token{&token.Token{token.CHAR, "b"}, &token.Token{token.CHAR, "c"}, &token.Token{token.EPSILON, ""}},
-		[]*token.Token{&token.Token{token.CHAR, "b"}, &token.Token{token.CHAR, "c"}, &token.Token{token.CHAR, "d"}},
+		[]*token.Token{&token.Token{token.SLASH, "b"}},
+		[]*token.Token{&token.Token{token.SLASH, ""}, &token.Token{token.COLON, ""}},
+		[]*token.Token{&token.Token{token.SLASH, ""}, &token.Token{token.COLON, ""}, &token.Token{token.EPSILON, ""}},
+		[]*token.Token{&token.Token{token.SLASH, ""}, &token.Token{token.COLON, ""}, &token.Token{token.EPSILON, ""}},
+		[]*token.Token{&token.Token{token.SLASH, ""}, &token.Token{token.COLON, ""}, &token.Token{token.DOT, ""}},
 	}
 	for k := 0; k < len(input); k += 1 {
 		parser := New(input[k])
@@ -98,9 +95,6 @@ func TestFirstNonTerminalNode(t *testing.T) {
 			tok := rslt[i]
 			if rslt[i].Type != tt.Type {
 				t.Fatalf("test[%d] token[%d]: token type don't match. expected=%q, got=%q", k, i, tt.Type, tok.Type)
-			}
-			if rslt[i].Value != tt.Value {
-				t.Fatalf("test[%d] token[%d]: token value don't match. expected=%q, got=%q", k, i, tt.Value, tok.Value)
 			}
 		}
 	}

@@ -49,8 +49,8 @@ func TestFollowInMiddle(t *testing.T) {
 func TestFollowWithBetaDerivableToEpsilon(t *testing.T) {
 	// testing the rule A => \alpha B \beta , it should add first(\beta) to follow(B)
 	a := &TerminalNode{&token.Token{token.CHAR, "a"}}
-	b := &TerminalNode{&token.Token{token.CHAR, "b"}}
-	c := &TerminalNode{&token.Token{token.CHAR, "c"}}
+	b := &TerminalNode{&token.Token{token.SLASH, ""}}
+	c := &TerminalNode{&token.Token{token.COLON, ""}}
 	eps := &TerminalNode{&token.Token{token.EPSILON, ""}}
 	B := (&NonTerminalNode{name: "B"}).addProduction([]Node{b})
 	C := (&NonTerminalNode{name: "C"}).addProduction([]Node{c}).addProduction([]Node{eps})
@@ -72,7 +72,7 @@ func TestFollowWithBetaDerivableToEpsilon(t *testing.T) {
 func TestFollowWithAlphaB(t *testing.T) {
 	// testing the rule A => \alpha B \beta , it should add first(\beta) to follow(B)
 	a := &TerminalNode{&token.Token{token.CHAR, "a"}}
-	b := &TerminalNode{&token.Token{token.CHAR, "b"}}
+	b := &TerminalNode{&token.Token{token.SLASH, ""}}
 	B := (&NonTerminalNode{name: "B"}).addProduction([]Node{b})
 	input := (&NonTerminalNode{name: "S"}).addProduction([]Node{a, B})
 	validation := []*token.Token{&token.Token{token.EOF, ""}}
@@ -87,10 +87,10 @@ func TestFollowWithAlphaB(t *testing.T) {
 
 func TestFollowWithDepth2(t *testing.T) {
 	// testing the rule A => \alpha B \beta , it should add first(\beta) to follow(B)
-	a := &TerminalNode{&token.Token{token.CHAR, "a"}}
-	b := &TerminalNode{&token.Token{token.CHAR, "b"}}
-	c := &TerminalNode{&token.Token{token.CHAR, "c"}}
-	d := &TerminalNode{&token.Token{token.CHAR, "d"}}
+	a := &TerminalNode{&token.Token{token.CHAR, ""}}
+	b := &TerminalNode{&token.Token{token.SLASH, ""}}
+	c := &TerminalNode{&token.Token{token.COLON, ""}}
+	d := &TerminalNode{&token.Token{token.DOT, ""}}
 	eps := &TerminalNode{&token.Token{token.EPSILON, ""}}
 	B := (&NonTerminalNode{name: "B"}).addProduction([]Node{b})
 	C := (&NonTerminalNode{name: "C"}).addProduction([]Node{c, B}).addProduction([]Node{eps})
@@ -115,9 +115,6 @@ func assertEq(t *testing.T, rslt []*token.Token, validation []*token.Token, test
 		tok := rslt[i]
 		if rslt[i].Type != tt.Type {
 			t.Fatalf("[%s] token[%d]: token type don't match. expected=%q, got=%q", testName, i, tt.Type, tok.Type)
-		}
-		if rslt[i].Value != tt.Value {
-			t.Fatalf("[%s] token[%d]: token value don't match. expected=%q, got=%q", testName, i, tt.Value, tok.Value)
 		}
 	}
 }

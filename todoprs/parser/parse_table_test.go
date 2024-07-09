@@ -12,26 +12,27 @@ import (
 //	terminal a in FIRST(\alph), add A -> \alph to M[A,a]
 //	if eps in FIRST(\alph), then foreach b terminal in FOLLOW(A), add A -> \alpha to M[A, b]
 
+// a is colon token, b is DIGIT, c SLASH, d TODO, e DOT
 // S -> AB , S -> cD , A -> DE, A -> a , D -> dA, D -> \eps , E -> e , B -> b,
 
-// __ | a      | b         | c       | d       | e         | $         |
-// ---|--------|-----------|---------|---------|-----------|-----------|
-// A  | A -> a |           |         | A -> DE | A -> DE   |           |
-// ---|--------|-----------|---------|---------|-----------|-----------|
-// B  |        | B -> b    |         |         |           |           |
-// ---|--------|-----------|---------|---------|-----------|-----------|
-// D  |        |           |         | D -> dA | D -> \eps |           |
-// ---|--------|-----------|---------|---------|-----------|-----------|
-// E  |        |           |         |         | E -> e    |           |
-// ---|--------|-----------|---------|---------|-----------|-----------|
-// S  | S-> AB |           | S -> cD | S -> AB | S -> AB   |           |
-// --------------------------------------------------------------------|
+// __ | a       | b          | c        | d           | e         | $         |
+// ---|---------|------------|----------|-------------|-----------|-----------|
+// A  | A -> :  |            |          | A -> D E    | A -> D E  |           |
+// ---|---------|------------|----------|-------------|-----------|-----------|
+// B  |         | B -> DIGIT |          |             |           |           |
+// ---|---------|------------|----------|-------------|-----------|-----------|
+// D  |         |            |          | D -> TODO A | D -> \eps |           |
+// ---|---------|------------|----------|-------------|-----------|-----------|
+// E  |         |            |          |             | E -> .    |           |
+// ---|-------- |----------- |----------|-------------|-----------|-----------|
+// S  | S-> A B |            | S -> / D | S -> A B    | S -> A B  |           |
+// ---------------------------------------------------------------------------|
 func TestWithDepth2(t *testing.T) {
-	a := &TerminalNode{&token.Token{token.CHAR, "a"}}
-	b := &TerminalNode{&token.Token{token.CHAR, "b"}}
-	c := &TerminalNode{&token.Token{token.CHAR, "c"}}
-	d := &TerminalNode{&token.Token{token.CHAR, "d"}}
-	e := &TerminalNode{&token.Token{token.CHAR, "e"}}
+	a := &TerminalNode{&token.Token{token.COLON, ""}}
+	b := &TerminalNode{&token.Token{token.DIGIT, ""}}
+	c := &TerminalNode{&token.Token{token.SLASH, ""}}
+	d := &TerminalNode{&token.Token{token.TODO, ""}}
+	e := &TerminalNode{&token.Token{token.DOT, ""}}
 	eps := &TerminalNode{&token.Token{token.EPSILON, ""}}
 
 	B := (&NonTerminalNode{"B", [][]Node{}}).addProduction([]Node{b})
@@ -42,16 +43,16 @@ func TestWithDepth2(t *testing.T) {
 	S := (&NonTerminalNode{"S", [][]Node{}}).addProduction([]Node{A, B}).addProduction([]Node{c, D})
 
 	validation := map[Transition][]Node{
-		Transition{A.name, a.token.Value}: []Node{a},
-		Transition{A.name, d.token.Value}: []Node{D, E},
-		Transition{A.name, e.token.Value}: []Node{D, E},
-		Transition{B.name, b.token.Value}: []Node{b},
-		Transition{D.name, d.token.Value}: []Node{d, A},
-		Transition{D.name, e.token.Value}: []Node{eps},
-		Transition{E.name, e.token.Value}: []Node{e},
-		Transition{S.name, c.token.Value}: []Node{c, D},
-		Transition{S.name, d.token.Value}: []Node{A, B},
-		Transition{S.name, e.token.Value}: []Node{A, B},
+		Transition{A.name, a.token.Type}: []Node{a},
+		Transition{A.name, d.token.Type}: []Node{D, E},
+		Transition{A.name, e.token.Type}: []Node{D, E},
+		Transition{B.name, b.token.Type}: []Node{b},
+		Transition{D.name, d.token.Type}: []Node{d, A},
+		Transition{D.name, e.token.Type}: []Node{eps},
+		Transition{E.name, e.token.Type}: []Node{e},
+		Transition{S.name, c.token.Type}: []Node{c, D},
+		Transition{S.name, d.token.Type}: []Node{A, B},
+		Transition{S.name, e.token.Type}: []Node{A, B},
 	}
 
 	parser := New(S)
@@ -67,7 +68,7 @@ func assertEqMap(t *testing.T, rslt map[Transition][]Node, validation map[Transi
 	for tr, ne := range validation {
 		nr := rslt[tr]
 		if !comparator.CmpSlice(nr, ne) {
-			t.Fatalf("[%s] Transition[%s,%+v]: Prod didn't match. expected=%v, got=%v", testName, tr.nodeName, tr.transitorValue, ne, nr)
+			t.Fatalf("[%s] Transition[%s,%+v]: Prod didn't match. expected=%v, got=%v", testName, tr.nodeName, tr.transitorType, ne, nr)
 		}
 	}
 }
