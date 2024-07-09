@@ -171,7 +171,9 @@ func (p *Parser) follow(n Node) ([]*token.Token, error) {
 				if !ele.isTerminal() {
 					if ele == n {
 						if i == len(prd)-1 {
-							result, err = p.alphaB(result, curr)
+							if curr != ele {
+								result, err = p.alphaB(result, curr)
+							}
 						} else if i < len(prd)-1 {
 							result, err = p.alphaBbeta(result, curr, prd, i)
 						}
@@ -331,13 +333,13 @@ func (p *Parser) PredictiveParsing(inputBuffer []*token.Token, prsTbl map[Transi
 			if !ok {
 				fmt.Errorf("Couldn't type assert %v to TerminalNode", X)
 			}
-			if *(Y.token) == *a {
+			if (*Y).token.Type == (*a).Type {
 				stack.Pop()
 				counter++
 				a = inputBuffer[counter]
 			} else {
 				// parsing error
-				return fmt.Errorf("Parsing error for terminal")
+				return fmt.Errorf("Parsing error for terminal between %s and %s.", (*Y).token.Type, (*a).Type)
 			}
 		} else {
 			Y, ok := X.(*NonTerminalNode)
@@ -350,7 +352,9 @@ func (p *Parser) PredictiveParsing(inputBuffer []*token.Token, prsTbl map[Transi
 				fmt.Printf("%s -> %v \n", Y.name, prod)
 				N := len(prod)
 				for i := N - 1; i >= 0; i -= 1 {
-					stack.Push(prod[i])
+					if !(prod[i].isTerminal() && prod[i].(*TerminalNode).token.Type == token.EPSILON) {
+						stack.Push(prod[i])
+					}
 				}
 			} else {
 				return fmt.Errorf("Parsing error for non terminal")
