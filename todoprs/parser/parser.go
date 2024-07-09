@@ -384,27 +384,6 @@ func (p *Parser) Parse(input string) error {
 	if err != nil {
 		return err
 	}
-	//input := "t/t.t:30://TODO test"
-	/*toks = []*token.Token{
-		&token.Token{token.CHAR, "t"},
-		&token.Token{token.SLASH, ""},
-		&token.Token{token.CHAR, "t"},
-		&token.Token{token.DOT, ""},
-		&token.Token{token.CHAR, "t"},
-		&token.Token{token.COLON, ""},
-		&token.Token{token.DIGIT, "3"},
-		&token.Token{token.DIGIT, "0"},
-		&token.Token{token.COLON, ""},
-		&token.Token{token.SLASH, ""},
-		&token.Token{token.SLASH, ""},
-		&token.Token{token.TODO, ""},
-		&token.Token{token.SPACE, ""},
-		&token.Token{token.CHAR, "t"},
-		&token.Token{token.CHAR, "e"},
-		&token.Token{token.CHAR, "s"},
-		&token.Token{token.CHAR, "t"},
-		&token.Token{token.EOF, ""},
-	}*/
 	return p.PredictiveParsing(toks, parsTbl)
 }
 
@@ -450,17 +429,3 @@ func RgGrammar() Node {
 	S := (&NonTerminalNode{"S", [][]Node{}}).addProduction([]Node{St, S1})
 	return S
 }
-
-/* func parse() error {
-	// Choose node-production
-	for i, n := range prod {
-		if !n.isTerminal() {
-			n.parse()
-		} else if n == token.ILLEGAL { // change Illegal with appropriate token
-
-		} else {
-			return fmt.Errof("Parse Error in Node")
-		}
-	}
-}
-*/
