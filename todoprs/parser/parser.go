@@ -259,6 +259,112 @@ func (p *Parser) makeParsingTable() (map[Transition][]Node, error) {
 	return m, nil
 }
 
+// TODO put the stack ds and the queue in other package.
+type Stack[E any] interface {
+	Push(e E) error
+	Pop() (E, error)
+	Peek() (E, error)
+}
+type BasicStack[E any] struct {
+	list []E
+	top  int
+}
+
+func NewBasicStack[E any](capacity int) *BasicStack[E] {
+	return &BasicStack[E]{make([]E, capacity, capacity), -1}
+}
+
+func (s *BasicStack[E]) Push(e E) error {
+	if s.top == cap(s.list) {
+		return fmt.Errorf("Exceding the capacity of the Stack.")
+	}
+	s.top += 1
+	s.list[s.top] = e
+	return nil
+}
+func (s *BasicStack[E]) Pop() (E, error) {
+	if s.top < 0 {
+		var zero E
+		return zero, fmt.Errorf("Stack is empty, can't pop.")
+	}
+	r := s.list[s.top]
+	s.top -= 1
+	return r, nil
+}
+
+func (s *BasicStack[E]) Peek() (E, error) {
+	if s.top < 0 {
+		var zero E
+		return zero, fmt.Errorf("Stack is empty, can't pop.")
+	}
+	return s.list[s.top], nil
+}
+
+// TODO check if input has EOF token , should it have one ?
+func (p *Parser) PredictiveParsing(inputBuffer []*token.Token, prsTbl map[Transition][]Node) error {
+	counter := 0
+	// random size for now
+	var stack Stack[Node] = NewBasicStack[Node](100)
+	var dollar Node = &TerminalNode{&token.Token{token.EOF, ""}}
+	// TODO should I implement the stack with pointers as args?
+	err := stack.Push(dollar)
+	if err != nil {
+		return err
+	}
+	stack.Push(p.startNode)
+	if err != nil {
+		return err
+	}
+	a := inputBuffer[counter]
+	X, err := stack.Peek()
+	if err != nil {
+		return err
+	}
+
+	for X != dollar {
+		X, err = stack.Peek()
+		if err != nil {
+			return err
+		}
+		if X.isTerminal() {
+			Y, ok := X.(*TerminalNode)
+			if !ok {
+				fmt.Errorf("Couldn't type assert %v to TerminalNode", X)
+			}
+			if *(Y.token) == *a {
+				stack.Pop()
+				counter++
+				a = inputBuffer[counter]
+			} else {
+				// parsing error
+				return fmt.Errorf("Parsing error for terminal")
+			}
+		} else {
+			Y, ok := X.(*NonTerminalNode)
+			if !ok {
+				fmt.Errorf("Couldn't type assert %v to *NonTerminalNode", X)
+			}
+			prod, ok := prsTbl[Transition{Y.name, a.Value}]
+			stack.Pop()
+			if ok {
+				fmt.Printf("%s -> %v \n", Y.name, prod)
+				N := len(prod)
+				for i := N - 1; i >= 0; i -= 1 {
+					stack.Push(prod[i])
+				}
+			} else {
+				return fmt.Errorf("Parsing error for non terminal")
+				// parsing error
+			}
+		}
+		X, err = stack.Peek()
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 /* func parse() error {
 	// Choose node-production
 	for i, n := range prod {
